@@ -705,7 +705,9 @@
 ;' is simply shorthand for the quote macro.  So you are quoting a quote
 ;which just returns the symbol for the quote macro, "quote."  Got it?
 
-;Exercise 2.56
+;Exercises 2.56 & 2.57
+;Note, allowing for arbitrary products makes simplification of
+;ones much more complicated.
 (defun number? (n)
   (typep n 'number))
 
@@ -718,18 +720,33 @@
 (defun same-variable? (v1 v2)
   (and (variable? v1) (variable? v2) (eq v1 v2)))
 
-(defun make-sum (a1 a2)
-  (cond ((=number? a1 0) a2)
-	((=number? a2 0) a1)
-	((and (number? a1) (number? a2)) (+ a1 a1))
-	(t (list '+ a1 a2))))
+(defun all-numbers? (l)
+  (cond ((null l) nil)
+	((null (cdr l)) (number? (car l)))
+	(t (and (number? (car l)) 
+		(all-numbers? (cdr l))))))
 
-(defun make-product (m1 m2)
-  (cond ((or (=number? m1 0) (=number? m2 0)) 0)
-	((=number? m1 1) m2)
+(defun make-sum (a1 &rest a2)
+  (cond ((all-numbers? (append (list a1) a2))
+	 (apply '+ (append (list a1) a2)))
+	
+	((null (cdr a2)) (list '+ a1 (car a2)))
+	
+	(t (list '+ a1 (apply #'make-sum (append (list (car a2)) (cdr a2)))))))
+
+(defun make-product (m1 &rest m2)
+  (cond ((all-numbers? (append (list m1) m2)) 
+	 (apply '* (append (list m1) m2)))
+
 	((=number? m2 1) m1)
-	((and (number? m1) (number? m2)) (* m1 m2))
-	(t (list '* m1 m2))))
+
+	((=number? m1 1)
+	 (cond ((= (length m2) 1) (car m2))
+	       (t (apply #'make-product (append (list (car m2)) (cdr m2))))))
+	
+	((null (cdr m2)) (list '* m1 (car m2)))
+	
+	(t (list '* m1 (apply #'make-product (append (list (car m2)) (cdr m2)))))))
 
 (defun sum? (x)
   (and (listp x) (eq (car x) '+)))
@@ -738,7 +755,9 @@
   (cadr x))
 
 (defun augend (x)
-  (caddr x))
+  (if (null (cdddr x))
+      (caddr x)
+      (apply #'make-sum (append (list (caddr x)) (cdddr x)))))
 
 (defun product? (x)
   (and (listp x) (eq (car x) '*)))
@@ -747,7 +766,9 @@
   (cadr p))
 
 (defun multiplicand (p)
-  (caddr p))
+  (if (null (cdddr p))
+      (caddr p)
+      (apply #'make-product (append (list (caddr p)) (cdddr p)))))
 
 (defun exponentiation? (x)
   (and (listp x) (eq (car x) '**)))
@@ -787,3 +808,85 @@
 
 	(t (error "unknown expression type -- deriv"))))
 
+;July 12, 2008
+;Exercise 2.58
+;a) With the simplifications all you need to do is change
+;make-product and make-sum to put the op in the middle
+;and then addend/augend/multiplier/multiplicand can pull out
+;the first and third elements, instead of the second and third
+;elements
+;b) Yes it is much harder and I won't be doing this problem.
+
+;Exercise 2.59
+(defun element-of-set? (x set)
+  (cond ((null set) nil)
+	((equal x (car set)) t)
+	(t (element-of-set? x (cdr set)))))
+
+(defun union-set (set1 set2)
+  (cond ((null set1) set2)
+	((null set2) set1)
+	((element-of-set? (car set1) set2)
+	 (union-set (cdr set1) set2))
+	(t (union-set (cdr set1) (cons (car set1) set2)))))
+
+;Exercise 2.60
+;element-of-set? and intersection-set are the same
+(defun adjoin-set-with-dups (x set)
+  (cons x set))
+
+(defun union-set-with-dups (set1 set2)
+  (append set1 set2))
+  
+;The efficiency of adjoin-set and union-set are both O(1), before they
+;were O(n) and O(n^2) respectively.  Element-of-set? and
+;intersection-set will both be the same as before, plus a constant
+;factor (the number of duplicates).  If you are going to adjoin and union
+;a lot and the number of expected duplicates is low then it will be
+;worth it to allow for duplicates, assuming your application
+;is fault tolerant in the face of duplicates.
+
+;Exercise 2.61
+(defun element-of-sorted-set? (x set)
+  (cond ((null set) nil)
+	((= x (car set)) t)
+	((< x (car set)) nil)
+	(t (element-of-sorted-set? x (cdr set)))))
+
+(defun insert-sorted-set (x set)
+  (defun iter-insert (new-set remaining)
+    (cond ((null remaining) (append new-set (list x)))
+	  ((> (car remaining) x) (append new-set (list x) remaining))
+	  (t (iter-insert (append new-set (list (car remaining))) (cdr remaining)))))
+
+  (if (null set)
+      (list x)
+      (iter-insert nil set)))
+
+(defun insert-sorted-set-r (x set)
+  (cond ((null set) (list x))
+	((< x (car set)) (append (list x) set))
+	(t (append (list (car set)) (insert-sorted-set-r x (cdr set))))))
+  
+(defun adjoin-sorted-set (x set)
+  (if (element-of-sorted-set? x set)
+      set
+      (insert-sorted-set x set)))
+
+;Exercise 2.62
+(defun union-sorted-set (set1 set2)
+  (defun iter-union (new-set one two)
+    (cond ((null one) (append new-set two))
+	  ((null two) (append new-set one))
+	  ( (= (car one) (car two)) (iter-union (append new-set (list (car one))) (cdr one) (cdr two)))
+	  ( (< (car one) (car two)) (iter-union (append new-set (list (car one))) (cdr one) two))
+	  ( (< (car two) (car one)) (iter-union (append new-set (list (car two))) one (cdr two)))))
+
+  (cond ((null set1) set2)
+	((null set2) set1)
+	(t (iter-union nil set1 set2))))
+
+;Exercises 2.63 -> 2.72 I will skip for now.  Both subjects are going to come up
+;in a data structures/algorithms text which I will be studying shortly.  I feel
+;pretty comfortable with Lisp/Scheme now so I really don't feel the need
+;to slog through these pages.
