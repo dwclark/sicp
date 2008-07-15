@@ -890,3 +890,116 @@
 ;in a data structures/algorithms text which I will be studying shortly.  I feel
 ;pretty comfortable with Lisp/Scheme now so I really don't feel the need
 ;to slog through these pages.
+
+(defun attach-tag (type-tag contents).
+  (const type-tag contents))
+
+(defun type-tag (datum)
+  (if (listp datum)
+      (car datum)
+      (error "Bad tagged datum -- TYPE-TAG")))
+
+(defun contents (datum)
+  (if (listp datum)
+      (cdr datum)
+      (error "Bad tagged datum -- CONTENTS")))
+
+(defparameter *op-table* (make-hash-table :test 'equal))
+
+(defun put-op (op type item)
+  (setf (gethash (list op type) *op-table*) item))
+
+(defun get-op (op type)
+  (gethash (list op type) *op-table*))
+
+;Exercise 2.73
+;a) The main idea here is to dispath on certain types and operations.
+;these procedures must always be called and must be called for every type
+;of expression.  If installed they would always dispatch and it would
+;lead to an infinite loop
+;b) and c) See below
+;d) I would have to change the order of the put calls as well.
+(defun operator (exp) (car exp))
+(defun operands (exp) (cdr exp))
+
+(defun data-deriv (expression var)
+  (cond ((number? expression) 0)
+
+	((variable? expression)
+	 (if (same-variable? expression var) 1 0))
+
+	(t (funcall (get-op 'data-deriv (operator expression)) (operands expression) var))))
+
+;Note that in CL you have to use labels to define functions locally. defun
+;always puts functions in the global scope.  Any time in my previous code where
+;I defuned inside another defun should be treated as a bug.
+(defun install-data-deriv ()
+  (labels ((make-sum (a1 &rest a2)
+	     (cond ((all-numbers? (append (list a1) a2))
+		    (apply '+ (append (list a1) a2)))
+		   
+		   ((null (cdr a2)) (list '+ a1 (car a2)))
+		   
+		   (t (list '+ a1 (apply #'make-sum (append (list (car a2)) (cdr a2)))))))
+  
+	   (make-product (m1 &rest m2)
+	     (cond ((all-numbers? (append (list m1) m2)) 
+		    (apply '* (append (list m1) m2)))
+		   
+		   ((=number? m2 1) m1)
+		   
+		   ((=number? m1 1)
+		    (cond ((= (length m2) 1) (car m2))
+			  (t (apply #'make-product (append (list (car m2)) (cdr m2))))))
+		   
+		   ((null (cdr m2)) (list '* m1 (car m2)))
+		   
+		   (t (list '* m1 (apply #'make-product (append (list (car m2)) (cdr m2)))))))
+  
+	   (addend (x)
+	     (car x))
+  
+	   (augend (x)
+	     (if (null (cddr x))
+		 (cadr x)
+		 (apply #'make-sum (append (list (cadr x)) (cddr x)))))
+
+	   (multiplier (p)
+	     (car p))
+
+	   (multiplicand (p)
+	     (if (null (cddr p))
+		 (cadr p)
+		 (apply #'make-product (append (list (cadr p)) (cddr p)))))
+	   
+	   (base (x)
+	     (car x))
+  
+	   (exponent (x)
+	     (cadr x))
+	   
+	   (make-exponent (e1 e2)
+	     (cond ((=number? e2 0) 1)
+		   ((=number? e2 1) e1)
+		   (t (list '** e1 e2)))))
+	   
+
+    (put-op 'data-deriv '+ 
+	    #'(lambda (expression var)
+		(make-sum (data-deriv (addend expression) var)
+			  (data-deriv (augend expression) var))))
+    
+    (put-op 'data-deriv '*
+	    #'(lambda (expression var)
+		(make-sum (make-product (multiplier expression)
+					(data-deriv (multiplicand expression) var))
+			  (make-product (data-deriv (multiplier expression) var)
+					(multiplicand expression)))))
+    
+    (put-op 'data-deriv '**
+	    #'(lambda (expression var)
+		(make-product
+		 (make-product (exponent expression)
+			       (make-exponent (base expression) (- (exponent expression) 1)))
+		 (data-deriv (base expression) var))))))
+  
