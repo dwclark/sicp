@@ -1,10 +1,8 @@
-;Exercise 1.2
 (defpackage :ex1-2 (:use :common-lisp) (:export :translate))
 (in-package :ex1-2)
 (defun translate ()
   (/ (+ 5 4 (- 2 (- 3 (+ 6 (/ 4 5))))) (* 3 (- 6 2) (- 2 7))))
 
-;Exercise 1.3
 (defpackage :ex1-3 (:use :common-lisp) (:export :sum-squares :sum-squares-cl))
 (in-package :ex1-3)
 
@@ -26,7 +24,6 @@
 
 (defpackage :ex1-4 (:use :common-lisp) (:export :a-plus-abs-b))
 (in-package :ex1-4)
-;Exercise 1.4
 ;Because common lisp is a lisp-2 there isn't any
 ;magic going on here, you have to tell CL exactly
 ;what to do whereas scheme will figure it out on it's own.
@@ -40,7 +37,6 @@
 
 (defpackage :ex1-5 (:use :common-lisp) (:export :p :test))
 (in-package :ex1-5)
-;Exercise 1.5
 ;CL is applicative, calling (test 0 (p)) will hang because
 ;CL will evaluate the p before passing it to test which will
 ;loop forever
@@ -53,7 +49,6 @@
 
 (defpackage :ex1-6 (:use :common-lisp) (:export :sqrt :average) (:shadow :sqrt))
 (in-package :ex1-6)
-;Exercise 1.6
 ;In SBCL you get stack exhaustion.  sqrt-iter is called
 ;over and over again because new if evaluates both the
 ;then-clause and the else-clause before returning the
@@ -83,7 +78,6 @@
 (defpackage :ex1-7 (:use :common-lisp) (:export :sqrt) 
 	    (:import-from :ex1-6 :improve) (:shadow :sqrt))
 (in-package :ex1-7)
-;Exercise 1.7
 ;The problem is numerical in nature.  For large numbers
 ;good-enough? may never return true as the computer cannot
 ;get enough precision in the improve function to ever
@@ -114,7 +108,6 @@
 (defpackage :ex1-8 (:use :common-lisp) (:export :cube-root) 
 	    (:import-from :ex1-7 :good-enough?))
 (in-package :ex1-8)
-;Exercise 1.8
 ;Reuse most of the stuff from exercise 1.7, just need
 ;to make new improve function
 (defun improve (guess x)
@@ -137,7 +130,6 @@
 
 (defpackage :ex1-10 (:use :common-lisp) (:export :A :show-values))
 (in-package :ex1-10)
-;Exercise 1.10
 ;Using wikipedia/wolfram math's definition
 (defun A (x y)
   (cond ((= x 0) (+ y 1))
@@ -155,7 +147,6 @@
 
 (defpackage :ex1-11 (:use :common-lisp) (:export :f-iterative :f-recursive))
 (in-package :ex1-11)
-;Exercise 1.11
 (defun sum (one two three)
   (+ one (* 2 two) (* 3 three)))
 
@@ -176,7 +167,6 @@
 
 (defpackage :ex1-12 (:use :common-lisp) (:export :pascals-tri))
 (in-package :ex1-12)
-;Exercise 1.12
 (defun pascals-tri (row col)
   (cond ((or (> col row) (< row 1)) 0)
 	((= col 1) 1)
@@ -189,7 +179,6 @@
 
 (defpackage :ex1-15 (:use :common-lisp) (:export :sine :reset-counter :*counter*))
 (in-package :ex1-15)
-;Exercise 1.15
 (defparameter *counter* 0)
 
 (defun reset-counter ()
@@ -210,7 +199,6 @@
 
 (defpackage :ex1-16 (:use :common-lisp) (:export :fast-expt))
 (in-package :ex1-16)
-;Exercise 1.16
 
 (defun fast-expt (b n)
   (labels ((iter (a b n)
@@ -222,7 +210,6 @@
 (defpackage :ex1-17 (:use :common-lisp) (:export :fast-mult)
 	    (:import-from :ex1-16))
 (in-package :ex1-17)
-;Exercise 1.17
 (defun half (x)
   (/ x 2))
 
@@ -238,7 +225,6 @@
 (defpackage :ex1-18 (:use :common-lisp) (:export :fast-mult)
 	    (:import-from :ex1-16) (:import-from :ex1-17 :half :double))
 (in-package :ex1-18)
-;Exercise 1.18
 ;again the key is to pay attention to invariants!
 (defun fast-mult (f s)
   (labels ((iter (sum f s)
@@ -251,7 +237,6 @@
 
 (defpackage :ex1-19 (:use :common-lisp) (:export :fib))
 (in-package :ex1-19)
-;Exercise 1.19
 (defun fib (n)
   (labels ((iter (a b p q count)
 	     (cond ((= count 0) b)
@@ -274,7 +259,6 @@
 
 (defpackage :ex1-21 (:use :common-lisp) (:export :smallest-divisor :prime?))
 (in-package :ex1-21)
-;Exercise 1.21
 ;using functions
 ;199 smallest is 199
 ;1999 smallest is 1999
@@ -292,7 +276,6 @@
 (defun prime? (n)
   (= (smallest-divisor n) n))
 
-;Exercise 1.22
 ;CL makes this a bit easier (time (search-for-primes next num nil))
 (defpackage :ex1-22 (:use :common-lisp) (:export :search-for-primes)
 	    (:import-from :ex1-21 :prime?))
@@ -315,7 +298,6 @@
 (defpackage :ex1-23 (:use :common-lisp) (:export :search-for-primes)
 	    (:import-from :ex1-21 :divides?))
 (in-package :ex1-23)
-;Exercise 1.23
 (defun next (n)
   (cond ((= n 2) 3)
 	(t (+ n 2))))
@@ -356,7 +338,6 @@
 
 (defpackage :ex1-27 (:use :common-lisp) (:export :carmichael-test :probably-prime?))
 (in-package :ex1-27)
-;Exercise 1.27
 (defun expmod (base exp m)
   (cond ((= exp 0) 1)
 	((evenp exp)
@@ -386,7 +367,6 @@
 
 (defpackage :ex1-29 (:use :common-lisp) (:export :rectangular-integral :simpsons-integral))
 (in-package :ex1-29)
-;Exercise 1.29
 (defun sum (term a next b)
   (if (> a b)
       0
@@ -447,7 +427,6 @@
 
 (defpackage :ex1-30 (:use :common-lisp) (:export :sum))
 (in-package :ex1-30)
-;Exercise 1.30
 (defun sum (term a next b)
   (labels ((iter (a result)
 	     (if (> a b) result
@@ -457,7 +436,6 @@
 (defpackage :ex1-31 (:use :common-lisp) (:export :product :factorial :pi)
 	    (:shadow :pi))
 (in-package :ex1-31)
-;Exercise 1.31
 ;recursive
 (defun product-r (func next a b)
   (if (> a b)
@@ -484,7 +462,6 @@
 
 (defpackage :ex1-32 (:use :common-lisp) (:export :accumulate :sum :product))
 (in-package :ex1-32)
-;Exercise 1.32
 (defun accumulate-r (combiner null-value func next a b)
   (if (> a b)
       null-value
@@ -509,7 +486,6 @@
 	    (:export :filtered-accumulate :sum-of-square-of-primes :product-gcd)
 	    (:import-from :ex1-21 :prime?))
 (in-package :ex1-33)
-;Exercise 1.33
 (defun filtered-accumulate (filter combiner null-value func next a b)
   (cond ((> a b) 
 	 null-value)
@@ -560,7 +536,6 @@
 
 (defpackage :ex1-35 (:use :common-lisp) (:export :phi :phi-damped))
 (in-package :ex1-35)
-;Exercise 1.35
 ;Divide both sides of the equation on p 38 by phi and you get the fixed point function
 (defun phi ()
   (fixed-point:compute (lambda (x) (+ 1 (/ 1 x))) 1.0))
@@ -571,7 +546,6 @@
 (defpackage :ex1-36 (:use :common-lisp) (:export :solver :solver-damped)
 	    (:import-from :fixed-point :close-enough?))
 (in-package :ex1-36)
-;Exercise 1.36
 (defvar *count* 0)
 
 (defun fixed-point-instr (f first-guess)
@@ -597,7 +571,6 @@
 
 (defpackage :ex1-37 (:use :common-lisp) (:export :cont-frac :cont-frac-r :phi))
 (in-package :ex1-37)
-;Exercise 1.37
 (defun cont-frac-r (n d k)
   (labels ((next (i)
 	     (if (= i k) 
@@ -620,7 +593,6 @@
 (defpackage :ex1-38 (:use :common-lisp) (:export :euler-e)
 	    (:import-from :ex1-37 :cont-frac))
 (in-package :ex1-38)
-;Exercise 1.38
 (defun euler-d (n)
   (labels ((is-1 (step)
 	     (not (= (mod (+ step 1) 3) 0)))
@@ -642,7 +614,6 @@
 (defpackage :ex1-39 (:use :common-lisp) (:export :tan)
 	    (:import-from :ex1-37 :cont-frac) (:shadow :tan))
 (in-package :ex1-39)
-;Exercise 1.39
 (defun tan (x k)
   (cont-frac #'(lambda (i)
 		 (if (= i 1)
@@ -653,7 +624,6 @@
 
 (defpackage :ex1-40 (:use :common-lisp) (:export :newtons-method :cubic :sqrt) (:shadow :sqrt))
 (in-package :ex1-40)
-;Exercise 1.40
 (defparameter *dx* 0.001)
 
 (defun deriv (g)
@@ -677,7 +647,6 @@
 
 (defpackage :ex1-41 (:use :common-lisp) (:export :double-call))
 (in-package :ex1-41)
-;Exercise 1.41
 (defun double-call (g)
   (lambda (x)
     (funcall g (funcall g x))))
@@ -686,7 +655,6 @@
 
 (defpackage :ex1-42 (:use :common-lisp) (:export :compose))
 (in-package :ex1-42)
-;Exercise 1.42
 (defun compose (f g)
   (lambda (x)
     (funcall f (funcall g x))))
@@ -694,7 +662,6 @@
 (defpackage :ex1-43 (:use :common-lisp) (:export :repeat-call)
 	    (:import-from :ex1-42 :compose))
 (in-package :ex1-43)
-;Exercise 1.43
 (defun repeat-call (f n)
   (labels ((do-it (new-func i)
 	     (if (= i 0)
@@ -707,7 +674,6 @@
 (defpackage :ex1-46 (:use :common-lisp) (:export :iterative-improve :sqrt :fixed-point)
 	    (:import-from :ex1-6 :average) (:shadow :sqrt))
 (in-package :ex1-46)
-;Exercise 1.46
 (defun iterative-improve (good-enough? improve)
   #'(lambda (x)
       (labels ((try (guess)
