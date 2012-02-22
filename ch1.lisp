@@ -606,10 +606,9 @@
 	1.0
 	(euler-next n 1.0 0))))
 
+;(euler-e 10) -> 2.7182817
 (defun euler-e (n)
   (+ 2.0 (cont-frac #'(lambda (i) i 1) #'euler-d n)))
-
-;(euler-e 10) -> 2.7182817
 
 (defpackage :ex1-39 (:use :common-lisp) (:export :tan)
 	    (:import-from :ex1-37 :cont-frac) (:shadow :tan))
