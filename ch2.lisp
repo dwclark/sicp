@@ -121,11 +121,11 @@
     (* (expt 2 a) (expt 3 b))))
 
 (defun num-mods (total base)
-  (defun try (next i)
-    (if (not (= 0 (mod next base)))
-	i
-	(try (/ next base) (+ i 1))))
-  (try total 0))
+  (labels ((try (next i)
+	     (if (not (= 0 (mod next base)))
+		 i
+		 (try (/ next base) (+ i 1)))))
+    (try total 0)))
 
 (defun car-godel (z)
   (num-mods (funcall z) 2))
@@ -171,12 +171,12 @@
       (funcall (funcall a f) (funcall (funcall b f) (funcall (funcall c f) x))))))
 
 (defun church-* (a b)
-  (defun do-it (total index)
-    (if (church= index b)
-	total
-	(do-it (church-+ total a) (church-+ index *church-one*))))
-  (cond ((church= b *church-zero*) *church-zero*)
-	(t (do-it a *church-one*))))
+  (labels ((do-it (total index)
+	     (if (church= index b)
+		 total
+		 (do-it (church-+ total a) (church-+ index *church-one*)))))
+    (cond ((church= b *church-zero*) *church-zero*)
+	  (t (do-it a *church-one*)))))
 
 (defun church= (a b)
   (= (church-translate a) (church-translate b)))
@@ -237,38 +237,38 @@
 ;3) The following looks right, but becaue of 2) I would feel more
 ;comfortable NOT using it, but using the simpler and less efficient solution
 (defun mul-interval-ben-bitdiddle (a b)
-  (defun pos (x) (> x 0))
-  (defun neg (x) (< x 0))
-  (let ((al (lower-bound a))
-	(au (upper-bound a))
-	(bl (lower-bound b))
-	(bu (upper-bound b)))
-
-    (cond ((and (pos al) (pos au) (pos bl) (pos bu))
-	   (make-interval (* al bl) (* au bu)))
-	  
-	  ((and (neg al) (pos au) (pos bl) (pos bu))
-	   (make-interval (* al bu) (* au bu)))
-	  
-	  ((and (neg al) (neg au) (pos bl) (pos bu))
-	   (make-interval (* al bu) (* au bl)))
-
-	  ((and (pos al) (pos au) (neg bl) (pos bu))
-	   (make-interval (* au bl) (* au bu)))
-	  
-	  ((and (neg al) (neg au) (neg bl) (pos bu))
-	   (make-interval (* al bu) (* au bl)))
-
-	  ((and (pos al) (pos au) (neg bl) (neg bu))
-	   (make-interval (* au bl) (* al bu)))
-
-	  ((and (neg al) (pos au) (neg bl) (neg bu))
-	   (make-interval (* au bl) (* al bl)))
-
-	  ((and (neg al) (neg au) (neg bl) (neg bu))
-	   (make-interval (* au bu) (* al bl)))
-
-	  (t (mul-interval a b)))))
+  (labels ((pos (x) (> x 0))
+	   (neg (x) (< x 0)))
+    (let ((al (lower-bound a))
+	  (au (upper-bound a))
+	  (bl (lower-bound b))
+	  (bu (upper-bound b)))
+      
+      (cond ((and (pos al) (pos au) (pos bl) (pos bu))
+	     (make-interval (* al bl) (* au bu)))
+	    
+	    ((and (neg al) (pos au) (pos bl) (pos bu))
+	     (make-interval (* al bu) (* au bu)))
+	    
+	    ((and (neg al) (neg au) (pos bl) (pos bu))
+	     (make-interval (* al bu) (* au bl)))
+	    
+	    ((and (pos al) (pos au) (neg bl) (pos bu))
+	     (make-interval (* au bl) (* au bu)))
+	    
+	    ((and (neg al) (neg au) (neg bl) (pos bu))
+	     (make-interval (* al bu) (* au bl)))
+	    
+	    ((and (pos al) (pos au) (neg bl) (neg bu))
+	     (make-interval (* au bl) (* al bu)))
+	    
+	    ((and (neg al) (pos au) (neg bl) (neg bu))
+	     (make-interval (* au bl) (* al bl)))
+	    
+	    ((and (neg al) (neg au) (neg bl) (neg bu))
+	     (make-interval (* au bu) (* al bl)))
+	    
+	    (t (mul-interval a b))))))
 	   
 
 ;Exercise 2.12
@@ -351,11 +351,11 @@
 
 ;Exercise 2.18
 (defun list-reverse (list)
-  (defun do-it (old-list new-list)
-    (cond ((null old-list) nil)
-	  ((null (cdr old-list)) (cons (car old-list) new-list))
-	  (t (do-it (cdr old-list) (cons (car old-list) new-list)))))
-  (do-it list nil))
+  (labels ((do-it (old-list new-list)
+	     (cond ((null old-list) nil)
+		   ((null (cdr old-list)) (cons (car old-list) new-list))
+		   (t (do-it (cdr old-list) (cons (car old-list) new-list))))))
+    (do-it list nil)))
 
 (defun list-reverse-r (l)
   (if (null l)
@@ -374,15 +374,15 @@
 ;(cons (car others) (same-parity first (cdr others))) when
 ;you are not consing the car of others (because it doesn't belong
 (defun same-parity (first &rest others)
-  (defun do-it (list answer)
-    (cond ((null (cdr list)) answer)
-	  
-	  ((or (and (odd? first) (odd? (car list)))
-	       (and (even? first) (even? (car list))))
-	   (do-it (cdr list) (append answer (list (car list)))))
-
-	  (t (do-it (cdr list) answer))))
-  (do-it others nil))
+  (labels ((do-it (list answer)
+	     (cond ((null list) answer)
+		   
+		   ((or (and (odd? first) (odd? (car list)))
+			(and (even? first) (even? (car list))))
+		    (do-it (cdr list) (append answer (list (car list)))))
+		   
+		   (t (do-it (cdr list) answer)))))
+    (do-it others nil)))
 
 ;Exercise 2.21
 (defun square-list-cons (items)
@@ -607,12 +607,12 @@
   (accumulate op initial sequence))
 
 (defun fold-left (op initial sequence)
-  (defun iter (result rest)
-    (if (null rest)
-	result
-	(iter (funcall op result (car rest))
-	      (cdr rest))))
-  (iter initial sequence))
+  (labels ((iter (result rest)
+	     (if (null rest)
+		 result
+		 (iter (funcall op result (car rest))
+		       (cdr rest)))))
+    (iter initial sequence)))
 
 ;(fold-right #'/ 1 (list 1 2 3)) -> 3/2
 ;(fold-left #'/ 1 (list 1 2 3)) -> 1/6
@@ -854,14 +854,14 @@
 	(t (element-of-sorted-set? x (cdr set)))))
 
 (defun insert-sorted-set (x set)
-  (defun iter-insert (new-set remaining)
-    (cond ((null remaining) (append new-set (list x)))
-	  ((> (car remaining) x) (append new-set (list x) remaining))
-	  (t (iter-insert (append new-set (list (car remaining))) (cdr remaining)))))
+  (labels ((iter-insert (new-set remaining)
+	     (cond ((null remaining) (append new-set (list x)))
+		   ((> (car remaining) x) (append new-set (list x) remaining))
+		   (t (iter-insert (append new-set (list (car remaining))) (cdr remaining))))))
 
-  (if (null set)
-      (list x)
-      (iter-insert nil set)))
+    (if (null set)
+	(list x)
+	(iter-insert nil set))))
 
 (defun insert-sorted-set-r (x set)
   (cond ((null set) (list x))
@@ -875,24 +875,24 @@
 
 ;Exercise 2.62
 (defun union-sorted-set (set1 set2)
-  (defun iter-union (new-set one two)
-    (cond ((null one) (append new-set two))
-	  ((null two) (append new-set one))
-	  ( (= (car one) (car two)) (iter-union (append new-set (list (car one))) (cdr one) (cdr two)))
-	  ( (< (car one) (car two)) (iter-union (append new-set (list (car one))) (cdr one) two))
-	  ( (< (car two) (car one)) (iter-union (append new-set (list (car two))) one (cdr two)))))
+  (labels ((iter-union (new-set one two)
+	     (cond ((null one) (append new-set two))
+		   ((null two) (append new-set one))
+		   ( (= (car one) (car two)) (iter-union (append new-set (list (car one))) (cdr one) (cdr two)))
+		   ( (< (car one) (car two)) (iter-union (append new-set (list (car one))) (cdr one) two))
+		   ( (< (car two) (car one)) (iter-union (append new-set (list (car two))) one (cdr two))))))
 
-  (cond ((null set1) set2)
-	((null set2) set1)
-	(t (iter-union nil set1 set2))))
+    (cond ((null set1) set2)
+	  ((null set2) set1)
+	  (t (iter-union nil set1 set2)))))
 
 ;Exercises 2.63 -> 2.72 I will skip for now.  Both subjects are going to come up
 ;in a data structures/algorithms text which I will be studying shortly.  I feel
 ;pretty comfortable with Lisp/Scheme now so I really don't feel the need
 ;to slog through these pages.
 
-(defun attach-tag (type-tag contents).
-  (const type-tag contents))
+(defun attach-tag (type-tag contents)
+  (cons type-tag contents))
 
 (defun type-tag (datum)
   (if (listp datum)
@@ -1003,3 +1003,33 @@
 			       (make-exponent (base expression) (- (exponent expression) 1)))
 		 (data-deriv (base expression) var))))))
   
+
+;Exercise 2.74 Looks too tedious and similar to 2.73
+
+;Exercise 2.75
+(defun make-from-mag-angle (r a)
+  #'(lambda (op)
+      (cond ((eq op 'magnitude) r)
+	    ((eq op 'angle) a)
+	    ((eq op 'real-part) (* r (cos a)))
+	    ((eq op 'imag-part) (* r (sin a)))
+	    (t (error "Unknown op")))))
+
+;Call like so -> (funcall (make-from-mag-angle 10 2) 'magnitude)
+;Again slightly more verbose than the scheme ((make-from-mag-angle 10 2) 'magnitude),
+;but to be honest a little more clear since the extra parenthesis can get lost
+
+;Exercise 2.76
+;
+;Explicit Dispatch New Types: All of the generic functions have to change
+;Explicit Dispatch New Operations: All of the generic functions have to change
+;Data Directed New Types: None of the generic functions have to change, just install new package
+;Data Directed New Operations: Just add the new generic function, no new packages
+;Message Passing New Types: No generic function changes, no new package installation
+;Message Passing New Operations: No generic function changes
+
+;For each of these answers generic functions means things like add, sub, mult, div for
+;complex numbers but does not include real, imag, magnitude, angle since they are part of
+;the type definition.  If you need to add new types often then message passing is superior
+;since the new type can be developed indepently with no need to install new packages.  But
+;the advantage is negligible.  For new operations there is no difference.
