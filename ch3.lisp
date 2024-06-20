@@ -266,3 +266,5 @@ and
 (cyclic-p (let ((lst (list 1 2 3)))
 (setf (cdddr lst) (cdr lst))))
 |#
+
+;; ex 3.20 More diagrams, I get it.
