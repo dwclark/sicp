@@ -1,4 +1,5 @@
-(defpackage :ch3 (:use :cl) (:export :monte-carlo :estimate-pi :cesaro-test))
+(defpackage :ch3 (:use :cl) (:export :monte-carlo :estimate-pi :cesaro-test
+				     :make-queue :front-queue :insert-queue :delete-queue :empty-queue-p))
 (in-package :ch3)
 (defun monte-carlo (trials experiment)
   (loop for i from 0 below trials
@@ -10,6 +11,35 @@
 
 (defun estimate-pi (trials)
   (sqrt (/ 6 (monte-carlo trials #'cesaro-test))))
+
+(defun empty-queue-p (q)
+  (null (car q)))
+  
+(defun make-queue ()
+  (cons nil nil))
+
+(defun front-queue (q)
+  (if (empty-queue-p q)
+      (error "front called with empty queue")
+      (car (car q))))
+
+(defun insert-queue (q item)
+  (let ((new-pair (cons item nil)))
+    (cond ((empty-queue-p q)
+	   (rplaca q new-pair)
+	   (rplacd q new-pair)
+	   q)
+	  (t
+	   (rplacd (cdr q) new-pair)
+	   (rplacd q new-pair)
+	   q))))
+
+(defun delete-queue (q)
+  (cond ((empty-queue-p q)
+	 (error "delete-queue called with empty queue"))
+	(t
+	 (rplaca q (cdr (car q)))
+	 q)))
 
 (defpackage :ex3.1 (:use :cl) (:export :make-accumulator))
 (in-package :ex3.1)
@@ -268,3 +298,54 @@ and
 |#
 
 ;; ex 3.20 More diagrams, I get it.
+
+(defpackage :ex3.21 (:use :cl :ch3) (:export :print-qeue))
+(in-package :ex3.21)
+
+;; It's not printing correctly because the default print function for
+;; a cons cell is being used. To make it print something better, just
+;; take the car of the queue and print that since it's a list
+(defun print-queue (q)
+  (format t "~A~%" (car q)))
+
+(defpackage :ex3.22 (:use :cl) (:export :make-queue))
+(in-package :ex3.22)
+
+(defun make-queue ()
+  (let* ((front nil)
+	 (rear nil))
+
+    (labels ((empty-q ()
+	       (null front))
+
+	     (front-q ()
+	       (if (empty-q)
+		   (error "front called with empty queue")
+		   (car front)))
+
+	     (insert-q (item)
+	       (cond ((empty-q)
+		      (setf front (list item))
+		      (setf rear front)
+		      front)
+		     (t
+		      (let ((new-item (cons item nil)))
+			(rplacd rear new-item)
+			(setf rear new-item)
+			front))))
+
+	     (delete-q ()
+	       (if (empty-q)
+		   (error "delete called with empty queue")
+		   (setf front (cdr front))))
+
+	     (print-q ()
+	       (format t "~A~%" front)))
+
+      (lambda (&key (item nil) op)
+	(case op
+	  (:empty (empty-q))
+	  (:front (front-q))
+	  (:insert (insert-q item))
+	  (:delete (delete-q))
+	  (:print (print-q)))))))
