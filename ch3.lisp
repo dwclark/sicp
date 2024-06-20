@@ -112,6 +112,12 @@
 	       (funcall acct amount :action action :password original)
 	       "incorrect-password")))
     #'account-action))
+;; Note, can also make this more scheme-like by doing the following (inside this package)
+;; (setf (symbol-function 'peter) (ex3.3:make-account 100 :password :peter-password))
+;; (setf (symbol-function 'paul) (make-joint #'peter :original :peter-password :new-password :paul-password))
+;; (peter 50 :withdraw :password :peter-password)
+;; (paul 25 :action :withdraw :password :paul-password)
+;; (peter 500 :action :deposit :password :peter-password)
 
 (defpackage :ex3.8 (:use :cl) (:export :f))
 (in-package :ex3.8)
@@ -122,3 +128,141 @@
     (if is-set
 	val
 	(setf is-set t val v))))
+
+;; ex 3.9 This is writing diagrams. I understand the environment model so I'm going to bypass this as it's
+;; also a pain to try and reproduce this in comments/text. Besides I don't really find the diagrams all
+;; that instructive. It's hard to diagram an evolving process with static diagrams. In any case, the whole
+;; point is to demonstrate the concepts of lexical scope, mutability, and shadowing.
+
+;; ex3.10 same
+
+;; ex3.11 same
+
+(defpackage :ex3.12 (:use :cl) (:export :exec))
+(in-package :ex3.12)
+
+(defun exec ()
+  (let* ((x (list 'a 'b))
+	 (y (list 'c 'd))
+	 (z (append x y)))
+    (format t "z: ~A~%" z)
+    (format t "(cdr x): ~A (should be (B)) ~%" (cdr x))
+
+    (let ((w (nconc x y)))
+      (format t "w: ~A~%" w)
+      (format t "(cdr x): ~A (should be (B C D))" (cdr x)))))
+
+;; ex3.13
+;; It will look like a regular box and pointer diagram, except the cons cell with
+;; C in the car will have a pointer in the cdr that points to the cons cell with
+;; A in the car cell. If you try and compute last pair you will have an infinite
+;; recursion.
+
+(defpackage :ex3.14 (:use :cl) (:export :mystery))
+(in-package :ex3.14)
+
+;; mystery is an inplace reverse function
+(defun mystery (x)
+  (labels ((loopy (x y)
+	     (format t "x: ~A, y: ~A~%" x y)
+	     (if (null x)
+		 y
+		 (let ((temp (cdr x)))
+		   (rplacd x y)
+		   (loopy temp x)))))
+    (loopy x nil)))
+
+;; ex3.15
+;; More diagramming. I get it, the cons cells are shared in z1, but not in z2
+
+(defpackage :ex3.16 (:use :cl) (:export :count-pairs))
+(in-package :ex3.16)
+
+(defun count-pairs (x)
+  (if (not (consp x))
+      0
+      (+ (count-pairs (car x))
+	 (count-pairs (cdr x))
+	 1)))
+
+;; (count-pairs (cons 1 (cons 2 (cons 3 nil)))) -> 3
+
+#|
+(count-pairs (let* ((x (cons nil nil))
+	       (y (cons nil nil))
+	       (z (cons 'a nil)))
+	  (setf (car x) y)
+	  (setf (car y) z)
+	  (setf (cdr y) z)
+x)) -> 4
+|#
+
+#|
+(count-pairs (let* ((x (cons nil nil))
+      (y (cons nil nil))
+      (z (cons 'a nil)))
+ (setf (car x) y)
+ (setf (cdr x) y)
+ (setf (car y) z)
+ (setf (cdr y) z)
+x)) ->7
+|#
+
+#|
+(count-pairs (let ((lst (list 1 2 3)))
+(setf (cdddr lst) lst))) -> infinite
+|#
+
+(defpackage :ex3.17 (:use :cl) (:export :count-pairs))
+(in-package :ex3.17)
+
+;; for all of the previous in ex 3.16, this returns 3
+(defun count-pairs (x)
+  (let ((seen nil))
+    (labels ((inner (x)
+	       (if (member x seen :test #'eq)
+		   0
+		   (progn
+		     (push x seen)
+		     (if (not (consp x))
+			 0
+			 (+ (inner (car x))
+			    (inner (cdr x))
+			    1))))))
+      (inner x))))
+
+(defpackage :ex3.18 (:use :cl) (:export :cyclic-p))
+(in-package :ex3.18)
+
+(defun cyclic-p (lst)
+  (let ((seen nil))
+    (labels ((test-for-cycle (cell)
+	       (cond ((member cell seen :test #'eq) t)
+		     ((null (cdr cell)) nil)
+		     (t (push cell seen)
+			(test-for-cycle (cdr cell))))))
+      (test-for-cycle lst))))
+
+(defpackage :ex3.19 (:use :cl) (:export :cyclic-p))
+(in-package :ex3.19)
+
+;; basic idea, in a non-cyclic list the number of pairs == length of list
+;; if this is violated, then it is cyclic
+(defun cyclic-p (lst)
+  (let ((num-pairs (ex3.17:count-pairs lst)))
+    (labels ((test-for-cycle (tmp so-far)
+	       (cond ((null tmp) nil)
+		     ((< num-pairs so-far) t)
+		     (t (test-for-cycle (cdr tmp) (1+ so-far))))))
+      (test-for-cycle lst 0))))
+
+;; returns true for 
+#|
+(cyclic-p (let ((lst (list 1 2 3)))
+(setf (cdddr lst) (cdar lst))))
+
+and
+
+(cyclic-p (let ((lst (list 1 2 3)))
+(setf (cdddr lst) (cdr lst))))
+|#
