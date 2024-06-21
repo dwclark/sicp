@@ -349,3 +349,90 @@ and
 	  (:insert (insert-q item))
 	  (:delete (delete-q))
 	  (:print (print-q)))))))
+
+(defpackage :ex3.23 (:use :cl) (:export :make-deque :empty-deque-p :front-deque :rear-deque
+					:front-insert-deque :rear-insert-deque
+					:front-delete-deque :rear-delete-deque :print-deque))
+(in-package :ex3.23)
+
+;; Basic representation: deque is a cons cell, the car contains the front of the deque
+;; while the cdr contains the rear of the deque. The deque is a doubly linked list (DLL). Each
+;; entry is a list. The (first entry) points to the previous entry in the DLL, while (third entry)
+;; points to the next entry in the DLL. If (first entry) is nil, it's the first entry in the DLL,
+;; and if (third entry) is nil, it's the last entry in the DLL.
+(defun make-deque ()
+  (cons nil nil))
+
+(defun empty-deque-p (d)
+  (null (car d)))
+
+(defun front-deque (d)
+  (if (empty-deque-p d)
+      (error "front called with empty deque")
+      (second (car d))))
+
+(defun rear-deque (d)
+  (if (empty-deque-p d)
+      (error "rear called with empty deque")
+      (second (cdr d))))
+
+(defun front-insert-deque (d item)
+  (let ((new (list nil item nil)))
+    (cond ((empty-deque-p d)
+	   (rplaca d new)
+	   (rplacd d new)
+	   :complete)
+	  (t
+	   (setf (first (car d)) new)
+	   (setf (third new) (car d))
+	   (rplaca d new)
+	   :complete))))
+
+(defun front-delete-deque (d)
+  (cond ((empty-deque-p d)
+	 (error "front-delete-deque called with empty deque"))
+	((null (third (car d)))
+	 (rplaca d nil)
+	 (rplacd d nil)
+	 :complete)
+	(t
+	 (rplaca d (third (car d)))
+	 (setf (first (car d)) nil)
+	 :complete)))
+
+(defun rear-insert-deque (d item)
+  (let ((new (list nil item nil)))
+    (cond ((empty-deque-p d)
+	   (rplaca d new)
+	   (rplacd d new)
+	   :complete)
+	  (t
+	   (setf (third (cdr d)) new)
+	   (setf (first new) (cdr d))
+	   (rplacd d new)
+	   :complete))))
+
+(defun rear-delete-deque (d)
+  (cond ((empty-deque-p d)
+	 (error "rear-delete-deque called with empty deque"))
+	((null (first (cdr d)))
+	 (rplaca d nil)
+	 (rplacd d nil)
+	 :complete)
+	(t
+	 (rplacd d (first (cdr d)))
+	 (setf (third (cdr d)) nil)
+	 :complete)))
+
+(defun extract-list (d)
+  (if (empty-deque-p d)
+      nil
+      (labels ((extract (cur so-far)
+		 (if (null (third cur))
+		     (reverse (cons (second cur) so-far))
+		     (extract (third cur) (cons (second cur) so-far)))))
+	(extract (car d) nil))))
+      
+(defun print-deque (d)
+  (format t "~A~%" (extract-list d)))
+      
