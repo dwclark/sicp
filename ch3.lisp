@@ -436,3 +436,46 @@ and
 (defun print-deque (d)
   (format t "~A~%" (extract-list d)))
       
+;; ex 3.24: I'm not going to do this one, it's fairly obvious. Plus most of the stuff
+;; for association lists already exists by default in common lisp, and I plan on using
+;; those builtin features for the next exercise (and any other exercise requiring a-lists)
+
+(defpackage :ex3.25 (:use :cl) (:export :lookup :insert :make-table))
+
+(in-package :ex3.25)
+
+(defun make-table ()
+  (cons :header nil))
+
+(defun lookup (table keys)
+  (if (and (not (null table)) (consp (cdr table)))
+      (let ((record (assoc (car keys) (cdr table))))
+	(if record
+	    (if (cdr keys)
+		(lookup record (cdr keys))
+		(cdr record))
+	    nil))
+      nil))
+
+(defun insert (table keys value)
+  (let ((record (assoc (car keys) (cdr table))))
+    (if record
+	(if (cdr keys)
+	    (insert record (cdr keys) value)
+	    (rplacd record value))
+	(let ((new-record (cons (car keys) nil)))
+	  (rplacd table (cons new-record (cdr table)))
+	  (if (cdr keys)
+	      (insert new-record (cdr keys) value)
+	      (rplacd new-record value)))))
+  :complete)
+
+;; testing
+;; (defparameter *t* (make-table))
+;; (insert *t* '(a b c) 10)
+;; (insert *t* '(d e f) 20)
+;; (insert *t* '(x y) 30)
+;; (lookup *t* '(a b c)) -> 10
+;; (lookup *t* '(x y)) -> 30
+;; (lookup *t* '(key)) -> nil
+;; (lookup *t* '(x y z)) -> nil
