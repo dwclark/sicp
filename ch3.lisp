@@ -518,7 +518,7 @@ and
 		(setf (gethash x table) result)
 		result))))))
 
-(declaim (ftype function memo-fib))
+(declaim (ftype (function (fixnum) fixnum) memo-fib))
 (setf (symbol-function 'memo-fib)
       (memoize #'(lambda (n)
 		   (cond ((= n 0) 0)
