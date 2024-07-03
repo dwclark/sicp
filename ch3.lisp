@@ -479,3 +479,49 @@ and
 ;; (lookup *t* '(x y)) -> 30
 ;; (lookup *t* '(key)) -> nil
 ;; (lookup *t* '(x y z)) -> nil
+
+;; ex3.26
+;; Basically, implement the lookup as a balanced binary tree with equals and less-than operators
+;; Then when you need to lookup a key, it is a log(n) operation, where n = number of entries in tree
+
+;; ex3.27
+(defpackage :ex3.27 (:use :cl) (:export :mem-fib))
+(in-package :ex3.27)
+
+;; this is the CL version of memoize and memo-fib, it uses symbol-function so
+;; that the call to memo-fib is idiomatic and so that the algorithm is basically
+;; the same as in scheme. It does use a hash map so that it is actually fast.
+
+;; I'm not going to do the environment thing. But, memo-fib is defined in an
+;; environment where the table is defined. Then each time memo-fib is called,
+;; it is calling the lambda defined in memoize, which points to the environment
+;; containing the table which is used to look up and accumulate correct values.
+;; Basically:
+;;                --> (memo-fib 1) --> table contains entry for 1 
+;; (memo-fib 3) --|
+;;                --> (memo-fib 2) --> table contains entry for 2
+;;
+;; If we were to call (memoize fib) it would not work the same because then
+;; calls could look like this:
+;;                --> (fib 1) --> computes fib 1
+;; (memo-fib 3) --|
+;;                --> (fib 2) --> computes fib 2
+;; i.e. the environment for fib doesn't contain the table and therefore nothing
+;; will be looked up, it will always be computed
+
+(defun memoize (func)
+  (let ((table (make-hash-table)))
+    #'(lambda (x)
+	(let ((prev-computed (gethash x table)))
+	  (or prev-computed
+	      (let ((result (funcall func x)))
+		(setf (gethash x table) result)
+		result))))))
+
+(setf (symbol-function 'memo-fib) #'(lambda (n) n))
+(setf (symbol-function 'memo-fib)
+      (memoize #'(lambda (n)
+		   (cond ((= n 0) 0)
+			 ((= n 1) 1)
+			 (t (+ (memo-fib (- n 1))
+			       (memo-fib (- n 2))))))))
